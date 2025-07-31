@@ -83,7 +83,7 @@ def create_poll(request):
         question = Question.objects.create(question_text=question_text, pub_date=timezone.now())
         if end_date_str:
             try:
-                question.end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%dT%H:%M')
+                question.end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%dT%H:%M:%SZ')
                 question.save()
             except ValueError:
                 return JsonResponse({'error': 'Invalid end_date format. Use YYYY-MM-DDTHH:MM.'}, status=400)

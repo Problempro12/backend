@@ -2,18 +2,12 @@ from django.shortcuts import get_object_or_404
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
-from .models import Question, Choice, Voter
+from .models import Question, Choice
 from django.views.decorators.csrf import csrf_exempt
-import uuid
+
 import json
 
-# Helper to get MAC address (simplified for demonstration)
-def get_mac_address(request):
-    # In a real application, you'd use a more robust method to get a unique identifier
-    # For now, we'll use a session-based UUID or a simplified IP-based approach
-    if not request.session.session_key:
-        request.session.save()
-    return request.session.session_key
+
 
 def index(request):
     latest_question_list = Question.objects.order_by('-pub_date')[:5]
@@ -37,6 +31,8 @@ def detail(request, question_id):
         'question_text': question.question_text,
         'pub_date': question.pub_date.isoformat(),
         'end_date': question.end_date.isoformat() if question.end_date else None,
+        'total_voters': question.total_voters(),
+        'choices_count': question.choices_count(),
         'choices': choices
     }
     return JsonResponse(data)
@@ -66,16 +62,11 @@ def vote(request, question_id):
     except (KeyError, Choice.DoesNotExist):
         return JsonResponse({'error': "You didn't select a choice."}, status=400)
     else:
-        mac_address = get_mac_address(request)
-        if Voter.objects.filter(question=question, mac_address=mac_address).exists():
-            return JsonResponse({'error': "You have already voted on this poll."}, status=403)
-        
         if question.end_date and timezone.now() > question.end_date:
             return JsonResponse({'error': "Voting for this poll has ended."}, status=403)
 
         selected_choice.votes += 1
         selected_choice.save()
-        Voter.objects.create(question=question, mac_address=mac_address)
         return JsonResponse({'message': 'Vote recorded successfully.'}, status=200)
 
 @csrf_exempt

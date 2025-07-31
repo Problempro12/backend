@@ -7,6 +7,14 @@ class Question(models.Model):
 
     def __str__(self):
         return self.question_text
+        
+    def total_voters(self):
+        """Возвращает общее количество проголосовавших"""
+        return sum(choice.votes for choice in self.choice_set.all())
+        
+    def choices_count(self):
+        """Возвращает количество вариантов ответа"""
+        return self.choice_set.count()
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
@@ -15,10 +23,3 @@ class Choice(models.Model):
 
     def __str__(self):
         return self.choice_text
-
-class Voter(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    mac_address = models.CharField(max_length=17, unique=True)
-
-    def __str__(self):
-        return f"{self.mac_address} voted on {self.question.question_text}"

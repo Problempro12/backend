@@ -3,6 +3,7 @@ from django.db import models
 class Question(models.Model):
     question_text = models.CharField(max_length=200)
     pub_date = models.DateTimeField('date published')
+    is_public = models.BooleanField(default=True)
     end_date = models.DateTimeField('end date', null=True, blank=True)
 
     def __str__(self):

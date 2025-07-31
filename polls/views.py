@@ -77,16 +77,26 @@ def create_poll(request):
             question_text = data['question_text']
             choices_text = data.get('choices', [])
             end_date_str = data.get('end_date')
+            pub_date_str = data.get('pub_date')
+            is_public = data.get('is_public', True) # Default to True if not provided
         except (json.JSONDecodeError, KeyError):
             return JsonResponse({'error': 'Invalid JSON data or missing fields.'}, status=400)
 
-        question = Question.objects.create(question_text=question_text, pub_date=timezone.now())
+        if pub_date_str:
+            try:
+                pub_date = timezone.datetime.strptime(pub_date_str, '%Y-%m-%dT%H:%M:%SZ')
+            except ValueError:
+                return JsonResponse({'error': 'Invalid pub_date format. Use YYYY-MM-DDTHH:MM:SZ.'}, status=400)
+        else:
+            pub_date = timezone.now()
+
+        question = Question.objects.create(question_text=question_text, pub_date=pub_date, is_public=is_public)
         if end_date_str:
             try:
                 question.end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%dT%H:%M:%SZ')
                 question.save()
             except ValueError:
-                return JsonResponse({'error': 'Invalid end_date format. Use YYYY-MM-DDTHH:MM.'}, status=400)
+                return JsonResponse({'error': 'Invalid end_date format. Use YYYY-MM-DDTHH:MM:SZ.'}, status=400)
 
         for choice_text in choices_text:
             if choice_text.strip():
